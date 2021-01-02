@@ -21,7 +21,7 @@ class Deck:
         self.all_cards = []
         for suit in suits:
             for rank in ranks:
-                created_card = Card(suit,rank)
+                created_card = Card(suit, rank)
 
                 self.all_cards.append(created_card)
 
@@ -48,6 +48,3 @@ class Player:
 
     def __str__(self):
         return f'Player {self.name} has {len(self.all_cards)} cards'
-
-new_player = Player('Jose')
-print(new_player)
