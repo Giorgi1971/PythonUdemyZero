@@ -44,7 +44,7 @@ def hit_or_stand(deck, hand):
 
 def show_some(player, dealer):
 
-    print('dealer Hands: ')
+    print('\nDealer Hands: ')
     print('One card hidden')
     print(dealer.cards[1])
     print('\n')
@@ -54,7 +54,7 @@ def show_some(player, dealer):
 
 
 def show_all(player, dealer):
-    print('Dealers Hand: ')
+    print('\nDealers Hand: ')
     for card in dealer.cards:
         print(card)
     print('\n')
