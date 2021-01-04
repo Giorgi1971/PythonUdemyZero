@@ -1,7 +1,7 @@
 from enum import Enum
 from abc import abstractmethod, ABCMeta
 from typing import Tuple
-from typing import List, Optional
+from typing import Optional
 
 letter = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H')
 numbers = (0, 1, 2, 3, 4, 5, 6, 7)
@@ -10,7 +10,7 @@ LETTER_TO_INT = dict(zip(letter, numbers))
 
 
 class Spot:
-    def __init__(self, y: int, x: int, piece: 'Piece' = None):
+    def __init__(self, y: int, x: int, piece=None):
         self.x = x
         self.y = y
         self.piece = piece
@@ -46,7 +46,11 @@ class Piece(metaclass=ABCMeta):
 
     @abstractmethod
     def can_move(self, start: 'Spot', end: 'Spot', board: 'Board'):
-        if (start is end) or (end and end.piece.color == self.color):
+        if start is end:
+            print('Not moved, This is same place')
+            return False
+        if end.piece:
+            print('Not moved, choosed Spot not free!')
             return False
 
     def moved(self, ):
@@ -60,6 +64,38 @@ class Bishop(Piece):
     display = {
         Color.WHITE: '♗',
         Color.BLACK: '♝',
+    }
+
+    def can_move(self, start: 'Spot', end: 'Spot', board: 'Board'):
+        super().can_move(start, end, board)
+        dy, dx = end.y - start.y, end.x - start.x
+
+        if abs(dx) == abs(dy) == 1:
+            # print('Not correct move! try another - ')
+            return True
+        # print(end.piece)
+        if not (abs(dx) == abs(dy) == 2):
+            print('Not correct move! try another - ')
+            return False
+        # Normalizing dx, dy to get directions
+        # ნორმალიზება dx, dy ცვლადების რათა ფიგურის მოძრაობის მიმართულება გავიგოთ
+        x_inc = dx // abs(dx)
+        y_inc = dy // abs(dy)
+
+        x, y = start.x, start.y
+        # for _ in range(abs(dx)):
+        x += x_inc
+        y += y_inc
+        if board.get_spot(x, y).piece.color != start.piece.color:
+            board.get_spot(x, y).piece = None
+            return True
+        return False
+
+
+class StaticSpot(Piece):
+    display = {
+        Color.WHITE: '♔',
+        Color.BLACK: '♚',
     }
 
     def can_move(self, start: 'Spot', end: 'Spot', board: 'Board'):
@@ -93,18 +129,22 @@ class Player:
         return self.turn
 
     @staticmethod
-    def ask_for_move(select: bool = False) -> [int, int]:
+    def ask_for_move(select: bool = False):
         text = 'სად გადავიდე: '
         if select:
             text = 'მონიშნეთ ფიგურა: '
         move = input(text)
-
+        if move == '':
+            return None
         return LETTER_TO_INT.get(move[0].upper()), int(move[1:]) - 1
+
+    def __str__(self):
+        return f'{self.color}'
 
 
 class Board:
     def __init__(self):
-        self.board: 'List[List[Spot]]' = []
+        self.board = []
         self.board.append([
             Spot(0, 0, Bishop(Color.WHITE)),
             Spot(0, 1, symb),
@@ -152,7 +192,7 @@ class Board:
             Spot(4, 1, '░'),
             Spot(4, 2),
             Spot(4, 3, '░'),
-            Spot(4, 4),
+            Spot(4, 4, Bishop(Color.WHITE)),
             Spot(4, 5, '░'),
             Spot(4, 6),
             Spot(4, 7, '░'),
@@ -199,13 +239,12 @@ class Board:
         return board
 
     def get_spot(self, x, y):
-        # @TODO: return if possible
         return self.board[y][x]
 
 
 class GameStatus(Enum):
     ACTIVE = 'ACTIVE'
-    FOREFIET = 'FORFEIT'
+    FORFEIT = 'FORFEIT'
 
 
 class Game:
@@ -221,7 +260,8 @@ class Game:
         while self.status == GameStatus.ACTIVE:
             move = self.get_valid_move()
             if move is None:
-                self.status = GameStatus.FOREFIET
+                print('Forfeit-იააა')
+                self.status = GameStatus.FORFEIT
                 break
 
             self.make_move(*move)
@@ -229,10 +269,19 @@ class Game:
             print(self.board)
 
     def update_turn(self):
+        if self.player_1.turn:
+            print(self.player_1)
+        if self.player_2.turn:
+            print(self.player_2)
         """ Updates Turn """
         self.player_1.turn = not self.player_1
         self.player_2.turn = not self.player_2
         self.current_player = self.player_1 or self.player_2
+        print('---------------')
+        if self.player_1.turn:
+            print(self.player_1)
+        if self.player_2.turn:
+            print(self.player_2)
 
     @staticmethod
     def make_move(start: Spot, end: Spot):
@@ -245,15 +294,31 @@ class Game:
         while True:
             try:
                 user_start = self.current_player.ask_for_move(select=True)
+                print(user_start)
                 if user_start is None:
                     y = input('დარწმუნებული ხარ რომ გინდა დანებდე ?: [დიახ|არა] ')
                     if y == 'დიახ':
+                        print(f'{self.current_player.color.value} - დანებდა')
                         return None
+                    else:
+                        continue
                 user_end = self.current_player.ask_for_move()
+                print(user_end)
+                if user_end is None:
+                    print('აირჩიეთ უჯრა კორექტულად')
+                    continue
 
+                if not (type(user_start[0]) == type(user_start[1]) == type(user_end[0]) == type(user_end[1]) == int):
+                    print('არჩეული უჯრები არასწორია, შეავსეთ ყურადღებით')
+                    continue
                 start: Spot = self.board.get_spot(*user_start)
+                print(start)
                 end: Spot = self.board.get_spot(*user_end)
-
+                print(end)
+                print(type(start.piece))
+                if type(start.piece) == str:
+                    print('მონიშნულ უჯრაზე ფიგურა არ ზის')
+                    continue
                 valid = start.piece and self.current_player.color == start.piece.color and start.piece.can_move(start, end, self.board)
                 if valid:
                     return start, end
