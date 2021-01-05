@@ -71,6 +71,10 @@ class Bishop(Piece):
         dy, dx = end.y - start.y, end.x - start.x
 
         if abs(dx) == abs(dy) == 1:
+            if start.piece.color.name == 'WHITE' and dy < 0:
+                return False
+            if start.piece.color.name == 'BLACK' and dy > 0:
+                return False
             # print('Not correct move! try another - ')
             return True
         # print(end.piece)
@@ -86,6 +90,8 @@ class Bishop(Piece):
         # for _ in range(abs(dx)):
         x += x_inc
         y += y_inc
+        if board.get_spot(x, y).piece == None:
+            return False
         if board.get_spot(x, y).piece.color != start.piece.color:
             board.get_spot(x, y).piece = None
             return True
@@ -269,19 +275,10 @@ class Game:
             print(self.board)
 
     def update_turn(self):
-        if self.player_1.turn:
-            print(self.player_1)
-        if self.player_2.turn:
-            print(self.player_2)
         """ Updates Turn """
         self.player_1.turn = not self.player_1
         self.player_2.turn = not self.player_2
         self.current_player = self.player_1 or self.player_2
-        print('---------------')
-        if self.player_1.turn:
-            print(self.player_1)
-        if self.player_2.turn:
-            print(self.player_2)
 
     @staticmethod
     def make_move(start: Spot, end: Spot):
@@ -294,7 +291,6 @@ class Game:
         while True:
             try:
                 user_start = self.current_player.ask_for_move(select=True)
-                print(user_start)
                 if user_start is None:
                     y = input('დარწმუნებული ხარ რომ გინდა დანებდე ?: [დიახ|არა] ')
                     if y == 'დიახ':
@@ -303,7 +299,6 @@ class Game:
                     else:
                         continue
                 user_end = self.current_player.ask_for_move()
-                print(user_end)
                 if user_end is None:
                     print('აირჩიეთ უჯრა კორექტულად')
                     continue
@@ -312,10 +307,7 @@ class Game:
                     print('არჩეული უჯრები არასწორია, შეავსეთ ყურადღებით')
                     continue
                 start: Spot = self.board.get_spot(*user_start)
-                print(start)
                 end: Spot = self.board.get_spot(*user_end)
-                print(end)
-                print(type(start.piece))
                 if type(start.piece) == str:
                     print('მონიშნულ უჯრაზე ფიგურა არ ზის')
                     continue
